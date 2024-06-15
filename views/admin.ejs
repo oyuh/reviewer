@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color, white);
+            color: var(--text-color, black);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .center-content {
+            text-align: center;
+            margin-top: 50px;
+        }
+        .highlight {
+            background-color: yellow;
+        }
+        .transparent-id {
+            opacity: 0.5;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f1f1f1;
+            transition: background-color 0.3s;
+        }
+        .header a {
+            margin-left: 10px;
+            text-decoration: none;
+            color: black;
+            transition: color 0.3s;
+        }
+        .header a:hover {
+            text-decoration: underline;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        table, th, td {
+            border: 1px solid black;
+            transition: border-color 0.3s;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .dark-mode-toggle {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .dark-mode-toggle:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <a href="/">Home</a>
+            <button class="dark-mode-toggle">Toggle Dark Mode</button>
+        </div>
+        <div class="header-right">
+            <span style="color: rgb(0, 166, 255);">Hello, <%= user.username %>!</span>
+            <a href="/logout">Logout</a>
+            <a href="/profile">Profile</a>
+            <% if (user.isAdmin) { %>
+                <a href="/admin">Admin</a>
+            <% } %>
+        </div>
+    </header>
+    <div class="center-content">
+        <h1>Admin Panel</h1>
+
+        <h2>Manage Users</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Admin</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% users.forEach(user => { %>
+                    <tr>
+                        <td><%= user.username %></td>
+                        <td><%= user.isAdmin ? 'Yes' : 'No' %></td>
+                        <td>
+                            <% if (!user.isAdmin) { %>
+                                <form action="/admin/setAdmin/<%= user.id %>" method="POST" style="display:inline;">
+                                    <button type="submit">Set as Admin</button>
+                                </form>
+                            <% } %>
+                            <% if (user.isAdmin && !SUPERADMIN_USERNAMES.includes(user.username)) { %>
+                                <form action="/admin/removeAdmin/<%= user.id %>" method="POST" style="display:inline;">
+                                    <button type="submit">Remove Admin</button>
+                                </form>
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+
+        <h2>Manage Values</h2>
+        <form action="/admin/add" method="POST">
+            <input type="text" name="value" placeholder="Value" required>
+            <button type="submit">Add Value</button>
+        </form>
+        <table>
+            <thead>
+                <tr>
+                    <th>Value</th>
+                    <th>Creator</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% items.forEach(item => { %>
+                    <tr>
+                        <td><%= item.value %></td>
+                        <td><%= item.creator %></td>
+                        <td>
+                            <form action="/admin/update/<%= item.id %>" method="POST" style="display:inline;">
+                                <input type="text" name="value" value="<%= item.value %>" required>
+                                <button type="submit">Update</button>
+                            </form>
+                            <form action="/admin/remove/<%= item.id %>" method="POST" style="display:inline;">
+                                <button type="submit">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+
+        <h2>View Logs</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Action</th>
+                    <th>Timestamp</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% logs.forEach(log => { %>
+                    <tr>
+                        <td><%= log.action %></td>
+                        <td><%= log.timestamp %></td>
+                        <td><%= log.details %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButton = document.querySelector('.dark-mode-toggle');
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme) {
+                document.documentElement.setAttribute('data-theme', currentTheme);
+                if (currentTheme === 'dark') {
+                    document.documentElement.style.setProperty('--background-color', '#121212');
+                    document.documentElement.style.setProperty('--text-color', '#e0e0e0');
+                } else {
+                    document.documentElement.style.setProperty('--background-color', 'white');
+                    document.documentElement.style.setProperty('--text-color', 'black');
+                }
+            }
+
+            toggleButton.addEventListener('click', () => {
+                let theme = document.documentElement.getAttribute('data-theme');
+                if (theme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    localStorage.setItem('theme', 'light');
+                    document.documentElement.style.setProperty('--background-color', 'white');
+                    document.documentElement.style.setProperty('--text-color', 'black');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                    document.documentElement.style.setProperty('--background-color', '#121212');
+                    document.documentElement.style.setProperty('--text-color', '#e0e0e0');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

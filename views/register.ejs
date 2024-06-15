@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color, white);
+            color: var(--text-color, black);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .center-content {
+            text-align: center;
+            margin-top: 50px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f1f1f1;
+            transition: background-color 0.3s;
+        }
+        .header a {
+            margin-left: 10px;
+            text-decoration: none;
+            color: black;
+            transition: color 0.3s;
+        }
+        .header a:hover {
+            text-decoration: underline;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .dark-mode-toggle {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .dark-mode-toggle:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <a href="/">Home</a>
+            <button class="dark-mode-toggle">Toggle Dark Mode</button>
+        </div>
+        <div class="header-right">
+            <a href="/login">Login</a>
+        </div>
+    </header>
+    <div class="center-content">
+        <h1>Register</h1>
+        <form action="/register" method="POST">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Register</button>
+        </form>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButton = document.querySelector('.dark-mode-toggle');
+            const currentTheme = localStorage.getItem('theme');
+            if (currentTheme) {
+                document.documentElement.setAttribute('data-theme', currentTheme);
+                if (currentTheme === 'dark') {
+                    document.documentElement.style.setProperty('--background-color', '#121212');
+                    document.documentElement.style.setProperty('--text-color', '#e0e0e0');
+                } else {
+                    document.documentElement.style.setProperty('--background-color', 'white');
+                    document.documentElement.style.setProperty('--text-color', 'black');
+                }
+            }
+
+            toggleButton.addEventListener('click', () => {
+                let theme = document.documentElement.getAttribute('data-theme');
+                if (theme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    localStorage.setItem('theme', 'light');
+                    document.documentElement.style.setProperty('--background-color', 'white');
+                    document.documentElement.style.setProperty('--text-color', 'black');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                    document.documentElement.style.setProperty('--background-color', '#121212');
+                    document.documentElement.style.setProperty('--text-color', '#e0e0e0');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
