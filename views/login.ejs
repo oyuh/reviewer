@@ -3,6 +3,7 @@
 <head>
     <title>Login</title>
     <style>
+        /* Your CSS styling here */
         body {
             font-family: 'Roboto', sans-serif;
             background-color: var(--background-color, white);
@@ -33,6 +34,20 @@
         .header-right {
             display: flex;
             align-items: center;
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        table, th, td {
+            border: 1px solid black;
+            transition: border-color 0.3s;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
         }
         input, button {
             padding: 10px;
@@ -93,7 +108,7 @@
         .close:focus {
             color: black;
             text-decoration: none;
-            cursor: pointer;
+            cursor: pointer.
         }
         :root {
             --background-color: white;
@@ -116,7 +131,6 @@
             <button class="dark-mode-toggle">Toggle Dark Mode</button>
         </div>
         <div class="header-right">
-            <a href="/login">Login</a>
             <a href="/register">Register</a>
         </div>
     </header>
@@ -127,10 +141,15 @@
             <input type="password" name="password" placeholder="Password" required>
             <button type="submit">Login</button>
         </form>
-        <% if (errorMessage) { %>
-            <div class="error-message"><%= errorMessage %></div>
-        <% } %>
     </div>
+
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p id="errorMessage"><%= errorMessage %></p>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const toggleButton = document.querySelector('.dark-mode-toggle');
@@ -160,6 +179,25 @@
                     document.documentElement.style.setProperty('--text-color', '#e0e0e0');
                 }
             });
+
+            const modal = document.getElementById("errorModal");
+            const span = document.getElementsByClassName("close")[0];
+
+            // Show error modal if there is an error
+            <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+                document.getElementById('errorMessage').textContent = "<%= errorMessage %>";
+                modal.style.display = "block";
+            <% } %>
+
+            span.onclick = function() {
+                modal.style.display = "none";
+            }
+
+            window.onclick = function(event) {
+                if (event.target === modal) {
+                    modal.style.display = "none";
+                }
+            }
         });
     </script>
 </body>

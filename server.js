@@ -152,7 +152,7 @@ app.post('/add', checkAuth, (req, res) => {
 });
 
 // Route to handle liking a post
-app.post('/like/:id', (req, res) => {
+app.post('/like/:id', checkAuth, (req, res) => {
     const itemId = req.params.id;
     const username = req.session.user.username;
     const id = uuidv4();
@@ -166,8 +166,7 @@ app.post('/like/:id', (req, res) => {
     });
 });
 
-// Route to handle unliking a post
-app.post('/unlike/:id', (req, res) => {
+app.post('/unlike/:id', checkAuth, (req, res) => {
     const itemId = req.params.id;
     const username = req.session.user.username;
     db.run("DELETE FROM likes WHERE itemId = ? AND username = ?", [itemId, username], (err) => {
