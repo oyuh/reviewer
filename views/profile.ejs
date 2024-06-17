@@ -13,12 +13,6 @@
             text-align: center;
             margin-top: 50px;
         }
-        .highlight {
-            background-color: yellow;
-        }
-        .transparent-id {
-            opacity: 0.5;
-        }
         .header {
             display: flex;
             justify-content: space-between;
@@ -90,58 +84,58 @@
             <button class="dark-mode-toggle">Toggle Dark Mode</button>
         </div>
         <div class="header-right">
-            <span style="color: rgb(0, 166, 255);">Hello, <%= user.username %>!</span>
-            <a href="/logout">Logout</a>
-            <a href="/profile">Profile</a>
-            <% if (user.isAdmin) { %>
-                <a href="/admin">Admin</a>
+            <% if (user) { %>
+                <span style="background: linear-gradient(to right, #007AFF, #00C6FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Hello, <%= user.username %>!</span>
+                <a href="/logout">Logout</a>
+                <a href="/profile">Profile</a>
+                <% if (user.isAdmin) { %>
+                    <a href="/admin">Admin</a>
+                <% } %>
+            <% } else { %>
+                <a href="/login">Login</a>
+                <a href="/register">Register</a>
             <% } %>
         </div>
     </header>
     <div class="center-content">
+        <h1>Profile</h1>
         <h2>Your Items</h2>
         <table>
-            <thead>
+            <tr>
+                <th>Value</th>
+                <th>Timestamp</th>
+                <th>Actions</th>
+            </tr>
+            <% userItems.forEach(item => { %>
                 <tr>
-                    <th>Value</th>
-                    <th>Actions</th>
+                    <td><%= item.value %></td>
+                    <td><%= new Date(item.timestamp).toLocaleString() %></td>
+                    <td>
+                        <form action="/update/<%= item.id %>" method="POST" style="display:inline;">
+                            <input type="text" name="value" value="<%= item.value %>" required>
+                            <button type="submit">Save</button>
+                        </form>
+                        <form action="/remove/<%= item.id %>" method="POST" style="display:inline;">
+                            <button type="submit">Remove</button>
+                        </form>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                <% items.forEach(item => { %>
-                    <tr>
-                        <td><%= item.value %></td>
-                        <td>
-                            <form action="/update/<%= item.id %>" method="POST" style="display:inline;">
-                                <input type="text" name="value" value="<%= item.value %>" required>
-                                <button type="submit">Save</button>
-                            </form>
-                            <form action="/remove/<%= item.id %>" method="POST" style="display:inline;">
-                                <button type="submit">Remove</button>
-                            </form>
-                        </td>
-                    </tr>
-                <% }) %>
-            </tbody>
+            <% }) %>
         </table>
         <h2>Your Actions</h2>
         <table>
-            <thead>
+            <tr>
+                <th>Action</th>
+                <th>Timestamp</th>
+                <th>Details</th>
+            </tr>
+            <% userActions.forEach(action => { %>
                 <tr>
-                    <th>Action</th>
-                    <th>Timestamp</th>
-                    <th>Details</th>
+                    <td><%= action.action %></td>
+                    <td><%= new Date(action.timestamp).toLocaleString() %></td>
+                    <td><%= action.details %></td>
                 </tr>
-            </thead>
-            <tbody>
-                <% logs.forEach(log => { %>
-                    <tr>
-                        <td><%= log.action %></td>
-                        <td><%= log.timestamp %></td>
-                        <td><%= log.details %></td>
-                    </tr>
-                <% }) %>
-            </tbody>
+            <% }) %>
         </table>
     </div>
     <script>

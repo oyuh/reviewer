@@ -13,24 +13,18 @@
             text-align: center;
             margin-top: 50px;
         }
-        .highlight {
-            background-color: yellow;
-        }
-        .transparent-id {
-            opacity: 0.5;
-        }
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 10px;
-            background-color: #f1f1f1;
+            background-color: var(--header-background-color, #f1f1f1);
             transition: background-color 0.3s;
         }
         .header a {
             margin-left: 10px;
             text-decoration: none;
-            color: black;
+            color: var(--header-link-color, black);
             transition: color 0.3s;
         }
         .header a:hover {
@@ -62,12 +56,12 @@
             transition: background-color 0.3s, border-color 0.3s, color 0.3s;
         }
         button {
-            background-color: #4CAF50;
+            background: linear-gradient(to right, #4a00e0, #8e2de2);
             color: white;
             cursor: pointer;
         }
         button:hover {
-            background-color: #45a049;
+            background: linear-gradient(to right, #3b00b8, #6b24d6);
         }
         .dark-mode-toggle {
             background-color: #333;
@@ -81,6 +75,52 @@
         .dark-mode-toggle:hover {
             background-color: #555;
         }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer.
+        }
+        :root {
+            --background-color: white;
+            --text-color: black;
+            --header-background-color: #f1f1f1;
+            --header-link-color: black;
+        }
+        [data-theme='dark'] {
+            --background-color: #121212;
+            --text-color: #e0e0e0;
+            --header-background-color: #1e1e1e;
+            --header-link-color: #e0e0e0;
+        }
     </style>
 </head>
 <body>
@@ -90,98 +130,81 @@
             <button class="dark-mode-toggle">Toggle Dark Mode</button>
         </div>
         <div class="header-right">
-            <span style="color: rgb(0, 166, 255);">Hello, <%= user.username %>!</span>
+            <span style="color: rgb(0, 166, 255); background: linear-gradient(to right, #4a00e0, #8e2de2); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Hello, <%= user.username %>!</span>
             <a href="/logout">Logout</a>
             <a href="/profile">Profile</a>
-            <% if (user.isAdmin) { %>
-                <a href="/admin">Admin</a>
-            <% } %>
         </div>
     </header>
     <div class="center-content">
         <h1>Admin Panel</h1>
-
-        <h2>Manage Users</h2>
+        <h2>Users</h2>
         <table>
-            <thead>
+            <tr>
+                <th>Username</th>
+                <th>Actions</th>
+            </tr>
+            <% users.forEach(user => { %>
                 <tr>
-                    <th>Username</th>
-                    <th>Admin</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% users.forEach(user => { %>
-                    <tr>
-                        <td><%= user.username %></td>
-                        <td><%= user.isAdmin ? 'Yes' : 'No' %></td>
-                        <td>
-                            <% if (!user.isAdmin) { %>
-                                <form action="/admin/setAdmin/<%= user.id %>" method="POST" style="display:inline;">
-                                    <button type="submit">Set as Admin</button>
-                                </form>
-                            <% } %>
-                            <% if (user.isAdmin && !SUPERADMIN_USERNAMES.includes(user.username)) { %>
+                    <td><%= user.username %></td>
+                    <td>
+                        <% if (!SUPERADMIN_USERNAMES.includes(user.username)) { %>
+                            <% if (user.isAdmin) { %>
                                 <form action="/admin/removeAdmin/<%= user.id %>" method="POST" style="display:inline;">
-                                    <button type="submit">Remove Admin</button>
+                                    <button type="submit" class="btn btn-delete">Remove Admin</button>
+                                </form>
+                            <% } else { %>
+                                <form action="/admin/setAdmin/<%= user.id %>" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn">Make Admin</button>
                                 </form>
                             <% } %>
-                        </td>
-                    </tr>
-                <% }) %>
-            </tbody>
-        </table>
-
-        <h2>Manage Values</h2>
-        <form action="/admin/add" method="POST">
-            <input type="text" name="value" placeholder="Value" required>
-            <button type="submit">Add Value</button>
-        </form>
-        <table>
-            <thead>
-                <tr>
-                    <th>Value</th>
-                    <th>Creator</th>
-                    <th>Actions</th>
+                        <% } %>
+                        <form action="/admin/deleteUser/<%= user.id %>" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-delete">Delete User</button>
+                        </form>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                <% items.forEach(item => { %>
-                    <tr>
-                        <td><%= item.value %></td>
-                        <td><%= item.creator %></td>
-                        <td>
-                            <form action="/admin/update/<%= item.id %>" method="POST" style="display:inline;">
-                                <input type="text" name="value" value="<%= item.value %>" required>
-                                <button type="submit">Update</button>
-                            </form>
-                            <form action="/admin/remove/<%= item.id %>" method="POST" style="display:inline;">
-                                <button type="submit">Remove</button>
-                            </form>
-                        </td>
-                    </tr>
-                <% }) %>
-            </tbody>
+            <% }) %>
         </table>
-
-        <h2>View Logs</h2>
+        <h2>Actions</h2>
         <table>
-            <thead>
+            <tr>
+                <th>Username</th>
+                <th>Action</th>
+                <th>Timestamp</th>
+                <th>Details</th>
+            </tr>
+            <% actions.forEach(action => { %>
                 <tr>
-                    <th>Action</th>
-                    <th>Timestamp</th>
-                    <th>Details</th>
+                    <td><%= action.username %></td>
+                    <td><%= action.action %></td>
+                    <td><%= new Date(action.timestamp).toLocaleString() %></td>
+                    <td><%= action.details %></td>
                 </tr>
-            </thead>
-            <tbody>
-                <% logs.forEach(log => { %>
-                    <tr>
-                        <td><%= log.action %></td>
-                        <td><%= log.timestamp %></td>
-                        <td><%= log.details %></td>
-                    </tr>
-                <% }) %>
-            </tbody>
+            <% }) %>
+        </table>
+        <h2>Posts</h2>
+        <table>
+            <tr>
+                <th>Content</th>
+                <th>Creator</th>
+                <th>Timestamp</th>
+                <th>Actions</th>
+            </tr>
+            <% items.forEach(item => { %>
+                <tr>
+                    <td><%= item.value %></td>
+                    <td><%= item.creator %></td>
+                    <td><%= new Date(item.timestamp).toLocaleString() %></td>
+                    <td>
+                        <form action="/remove/<%= item.id %>" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-delete">Delete</button>
+                        </form>
+                        <form action="/edit/<%= item.id %>" method="POST" style="display:inline;">
+                            <button type="submit" class="btn">Edit</button>
+                        </form>
+                    </td>
+                </tr>
+            <% }) %>
         </table>
     </div>
     <script>

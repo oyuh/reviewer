@@ -24,13 +24,13 @@
             justify-content: space-between;
             align-items: center;
             padding: 10px;
-            background-color: #f1f1f1;
+            background-color: var(--header-background-color, #f1f1f1);
             transition: background-color 0.3s;
         }
         .header a {
             margin-left: 10px;
             text-decoration: none;
-            color: black;
+            color: var(--header-link-color, black);
             transition: color 0.3s;
         }
         .header a:hover {
@@ -40,19 +40,75 @@
             display: flex;
             align-items: center;
         }
-        table {
-            width: 80%;
-            margin: 20px auto;
-            border-collapse: collapse;
+        .header-right span {
+            background: linear-gradient(to right, #4a00e0, #8e2de2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .post {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: var(--post-background-color, #fafafa);
+            color: var(--post-text-color, black);
             transition: background-color 0.3s, color 0.3s;
         }
-        table, th, td {
-            border: 1px solid black;
-            transition: border-color 0.3s;
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
         }
-        th, td {
-            padding: 10px;
-            text-align: left;
+        .post-author {
+            font-weight: bold;
+        }
+        .post-timestamp {
+            color: #999;
+            font-size: 0.9em;
+        }
+        .post-content {
+            font-size: 1.1em;
+        }
+        .post-image {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+        }
+        .actions {
+            margin-top: 10px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 8px 12px;
+            margin: 4px 0;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            outline: none;
+            color: #fff;
+            background: linear-gradient(to right, #4a00e0, #8e2de2);
+            border: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: linear-gradient(to right, #3b00b8, #6b24d6);
+        }
+        .btn:active {
+            background: linear-gradient(to right, #3b00b8, #6b24d6);
+            transform: translateY(2px);
+        }
+        .btn-delete {
+            background: linear-gradient(to right, #e60000, #ff0000);
+        }
+        .btn-delete:hover {
+            background: linear-gradient(to right, #b30000, #cc0000);
+        }
+        .btn-delete:active {
+            background: linear-gradient(to right, #b30000, #cc0000);
         }
         input, button {
             padding: 10px;
@@ -62,12 +118,12 @@
             transition: background-color 0.3s, border-color 0.3s, color 0.3s;
         }
         button {
-            background-color: #4CAF50;
+            background: linear-gradient(to right, #4a00e0, #8e2de2);
             color: white;
             cursor: pointer;
         }
         button:hover {
-            background-color: #45a049;
+            background: linear-gradient(to right, #3b00b8, #6b24d6);
         }
         .dark-mode-toggle {
             background-color: #333;
@@ -81,6 +137,63 @@
         .dark-mode-toggle:hover {
             background-color: #555;
         }
+        .post-link {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .post-link:hover {
+            text-decoration: underline;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        :root {
+            --background-color: white;
+            --text-color: black;
+            --header-background-color: #f1f1f1;
+            --header-link-color: black;
+            --post-background-color: #fafafa;
+            --post-text-color: black;
+        }
+        [data-theme='dark'] {
+            --background-color: #121212;
+            --text-color: #e0e0e0;
+            --header-background-color: #1e1e1e;
+            --header-link-color: #e0e0e0;
+            --post-background-color: #1e1e1e;
+            --post-text-color: #e0e0e0;
+        }
     </style>
 </head>
 <body>
@@ -91,7 +204,7 @@
         </div>
         <div class="header-right">
             <% if (user) { %>
-                <span style="color: rgb(0, 166, 255);">Hello, <%= user.username %>!</span>
+                <span style="color: rgb(0, 166, 255); background: linear-gradient(to right, #4a00e0, #8e2de2); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Hello, <%= user.username %>!</span>
                 <a href="/logout">Logout</a>
                 <a href="/profile">Profile</a>
                 <% if (user.isAdmin) { %>
@@ -104,7 +217,7 @@
         </div>
     </header>
     <div class="center-content">
-        <h1>Stored Values</h1>
+        <h1>Posts</h1>
 
         <form id="filter-form" action="/" method="GET">
             <label for="filter-user">Filter by User:</label>
@@ -119,44 +232,79 @@
             <button type="submit">Filter</button>
         </form>
 
-        <ul>
+        <div class="posts">
             <% items.forEach(item => { %>
-                <li class="<%= item.id === selectedId ? 'highlight' : '' %>">
-                    <%= item.value %>
+                <div class="post <%= item.id === selectedId ? 'highlight' : '' %>">
+                    <div class="post-header">
+                        <div class="post-author"><%= item.creator %></div>
+                        <div class="post-timestamp"><%= new Date(item.timestamp).toLocaleString() %></div>
+                    </div>
+                    <div class="post-content"><%= item.value %></div>
+                    <% if (item.imageLink) { %>
+                        <img src="<%= item.imageLink %>" alt="Post Image" class="post-image">
+                    <% } %>
+                    <div>
+                        <a href="#<%= item.id %>" class="post-link">Link to Post</a>
+                    </div>
                     <% if (item.id === selectedId) { %>
                         <span class="transparent-id"> (ID: <%= item.id %>, Created by: <%= item.creator %>) </span>
                         <% if (user && (user.username === item.creator || user.isAdmin)) { %>
                             <form action="/update/<%= item.id %>" method="POST" style="display:inline;">
                                 <input type="text" name="value" value="<%= item.value %>" required>
-                                <button type="submit">Save</button>
+                                <button type="submit" class="btn">Save</button>
                             </form>
                             <form action="/unselect" method="POST" style="display:inline;">
-                                <button type="submit">Unselect</button>
+                                <button type="submit" class="btn">Unselect</button>
                             </form>
                         <% } else { %>
                             <form action="/unselect" method="POST" style="display:inline;">
-                                <button type="submit">Unselect</button>
+                                <button type="submit" class="btn">Unselect</button>
                             </form>
                         <% } %>
                     <% } else if (user && (user.username === item.creator || user.isAdmin)) { %>
-                        <form action="/remove/<%= item.id %>" method="POST" style="display:inline;">
-                            <button type="submit">Remove</button>
-                        </form>
-                        <form action="/select/<%= item.id %>" method="POST" style="display:inline;">
-                            <button type="submit">Select</button>
-                        </form>
+                        <div class="actions">
+                            <form action="/select/<%= item.id %>" method="POST" style="display:inline;">
+                                <button type="submit" class="btn">Edit</button>
+                            </form>
+                            <form action="/remove/<%= item.id %>" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-delete">Delete</button>
+                            </form>
+                        </div>
                     <% } %>
-                </li>
+                    <div class="actions">
+                        <% if (user && userLikes[item.id]) { %>
+                            <form action="/unlike/<%= item.id %>" method="POST" style="display:inline;">
+                                <button type="submit" class="btn">Unlike</button>
+                            </form>
+                        <% } else if (user) { %>
+                            <form action="/like/<%= item.id %>" method="POST" style="display:inline;">
+                                <button type="submit" class="btn">Like</button>
+                            </form>
+                        <% } %>
+                    </div>
+                    <% if (likes[item.id] && likes[item.id].length > 0) { %>
+                        <div class="likes">
+                            <strong>Liked by:</strong> <%= likes[item.id].join(', ') %>
+                        </div>
+                    <% } %>
+                </div>
             <% }) %>
-        </ul>
+        </div>
 
         <% if (user) { %>
-            <h2>Add a New Value</h2>
+            <h2>Add a New Post</h2>
             <form action="/add" method="POST">
-                <input type="text" name="value" required>
-                <button type="submit">Add</button>
+                <input type="text" name="value" placeholder="Write something..." required>
+                <input type="text" name="imageLink" placeholder="Image URL (optional)">
+                <button type="submit" class="btn">Add</button>
             </form>
         <% } %>
+    </div>
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p id="errorMessage"></p>
+        </div>
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -167,9 +315,13 @@
                 if (currentTheme === 'dark') {
                     document.documentElement.style.setProperty('--background-color', '#121212');
                     document.documentElement.style.setProperty('--text-color', '#e0e0e0');
+                    document.documentElement.style.setProperty('--post-background-color', '#1e1e1e');
+                    document.documentElement.style.setProperty('--post-text-color', '#e0e0e0');
                 } else {
                     document.documentElement.style.setProperty('--background-color', 'white');
                     document.documentElement.style.setProperty('--text-color', 'black');
+                    document.documentElement.style.setProperty('--post-background-color', '#fafafa');
+                    document.documentElement.style.setProperty('--post-text-color', 'black');
                 }
             }
 
@@ -180,13 +332,37 @@
                     localStorage.setItem('theme', 'light');
                     document.documentElement.style.setProperty('--background-color', 'white');
                     document.documentElement.style.setProperty('--text-color', 'black');
+                    document.documentElement.style.setProperty('--post-background-color', '#fafafa');
+                    document.documentElement.style.setProperty('--post-text-color', 'black');
                 } else {
                     document.documentElement.setAttribute('data-theme', 'dark');
                     localStorage.setItem('theme', 'dark');
                     document.documentElement.style.setProperty('--background-color', '#121212');
                     document.documentElement.style.setProperty('--text-color', '#e0e0e0');
+                    document.documentElement.style.setProperty('--post-background-color', '#1e1e1e');
+                    document.documentElement.style.setProperty('--post-text-color', '#e0e0e0');
                 }
             });
+
+            // Modal for error messages
+            const modal = document.getElementById("errorModal");
+            const span = document.getElementsByClassName("close")[0];
+
+            span.onclick = function() {
+                modal.style.display = "none";
+            }
+
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+
+            // Show error modal if there is an error
+            <% if (errorMessage) { %>
+                document.getElementById('errorMessage').textContent = "<%= errorMessage %>";
+                modal.style.display = "block";
+            <% } %>
         });
     </script>
 </body>

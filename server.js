@@ -2,24 +2,34 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const bodyParser = require('body-parser');
 const db = require('./database');
 const app = express();
 const path = require('path');
 const port = 3000;
 
-const SUPERADMIN_USERNAMES = ['law']; // Hardcoded superadmin usernames
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(session({
+    secret: 'secret1234',
+    resave: false,
+    saveUninitialized: true
+}));
+
+const SUPERADMIN_USERNAMES = ['law'];
+
+function ensureSuperAdmin(req, res, next) {
+    if (req.session.user && SUPERADMIN_USERNAMES.includes(req.session.user.username)) {
+        next();
+    } else {
+        res.redirect('/');
+    }
+}
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-
-app.use(session({
-    secret: 'your_secret_key',
-    resave: false,
-    saveUninitialized: true
-}));
 
 let selectedId = null;
 
@@ -32,12 +42,39 @@ function checkAuth(req, res, next) {
     }
 }
 
-// Middleware to check if user is admin
-function checkAdmin(req, res, next) {
-    if (req.session.user && (req.session.user.isAdmin || SUPERADMIN_USERNAMES.includes(req.session.user.username))) {
+function ensureLoggedIn(req, res, next) {
+    if (req.session.user) {
+        next();
+    } else {
+        res.redirect('/login');
+    }
+}
+
+function ensureAdmin(req, res, next) {
+    if (req.session.user && req.session.user.isAdmin) {
         next();
     } else {
         res.redirect('/');
+    }
+}
+
+// Middleware to check if user is admin
+function checkAdmin(req, res, next) {
+    if (req.session.user) {
+        db.get("SELECT isAdmin FROM users WHERE id = ?", [req.session.user.id], (err, user) => {
+            if (err || !user.isAdmin) {
+                req.session.destroy((err) => {
+                    if (err) {
+                        return console.log(err);
+                    }
+                    res.redirect('/login');
+                });
+            } else {
+                next();
+            }
+        });
+    } else {
+        res.redirect('/login');
     }
 }
 
@@ -50,12 +87,11 @@ function checkSuperAdmin(req, res, next) {
     }
 }
 
-// Route to display the form and stored values with filtering
 app.get('/', (req, res) => {
-    let sql = "SELECT * FROM items";
-    let params = [];
     const filterUser = req.query['filter-user'];
     const filterDate = req.query['filter-date'];
+    let sql = "SELECT * FROM items";
+    const params = [];
 
     if (filterUser) {
         sql += " WHERE creator = ?";
@@ -63,32 +99,83 @@ app.get('/', (req, res) => {
     }
 
     if (filterDate) {
-        if (params.length) {
-            sql += " AND DATE(timestamp) = DATE(?)";
-        } else {
-            sql += " WHERE DATE(timestamp) = DATE(?)";
-        }
+        sql += params.length ? " AND DATE(timestamp) = DATE(?)" : " WHERE DATE(timestamp) = DATE(?)";
         params.push(filterDate);
     }
 
-    db.all(sql, params, (err, rows) => {
+    db.all(sql, params, (err, items) => {
         if (err) {
-            throw err;
+            console.error('Error fetching items:', err);
+            req.session.errorMessage = "An error occurred while fetching items.";
+            items = [];
         }
-        res.render('index', { items: rows, selectedId, user: req.session.user });
+
+        db.all("SELECT * FROM likes", [], (err, likesRows) => {
+            if (err) {
+                console.error('Error fetching likes:', err);
+                req.session.errorMessage = "An error occurred while fetching likes.";
+                likesRows = [];
+            }
+
+            const likes = likesRows.reduce((acc, like) => {
+                acc[like.itemId] = acc[like.itemId] || [];
+                acc[like.itemId].push(like.username);
+                return acc;
+            }, {});
+            const userLikes = req.session.user
+                ? likesRows.filter(like => like.username === req.session.user.username).reduce((acc, like) => {
+                    acc[like.itemId] = true;
+                    return acc;
+                }, {})
+                : {};
+
+            res.render('index', { items, selectedId, user: req.session.user, likes, userLikes, errorMessage: req.session.errorMessage });
+            delete req.session.errorMessage; // Clear error message after rendering
+        });
     });
 });
 
-// Route to handle form submission
+// Route to handle form submission with image link
 app.post('/add', checkAuth, (req, res) => {
     const value = req.body.value;
+    const imageLink = req.body.imageLink;
     const id = uuidv4();
     const creator = req.session.user.username;
-    db.run("INSERT INTO items (id, value, creator) VALUES (?, ?, ?)", [id, value, creator], (err) => {
+    const timestamp = new Date().toISOString();
+    db.run("INSERT INTO items (id, value, creator, timestamp, imageLink) VALUES (?, ?, ?, ?, ?)", [id, value, creator, timestamp, imageLink], (err) => {
         if (err) {
             return console.log(err.message);
         }
         logAction('add', req.session.user.username, `Added value "${value}" with ID "${id}"`);
+        res.redirect('/');
+    });
+});
+
+// Route to handle liking a post
+app.post('/like/:id', (req, res) => {
+    const itemId = req.params.id;
+    const username = req.session.user.username;
+    const id = uuidv4();
+    db.run("INSERT INTO likes (id, itemId, username) VALUES (?, ?, ?)", [id, itemId, username], (err) => {
+        if (err) {
+            req.session.errorMessage = "An error occurred. Please try again.";
+            res.redirect('/');
+            return console.log(err.message);
+        }
+        res.redirect('/');
+    });
+});
+
+// Route to handle unliking a post
+app.post('/unlike/:id', (req, res) => {
+    const itemId = req.params.id;
+    const username = req.session.user.username;
+    db.run("DELETE FROM likes WHERE itemId = ? AND username = ?", [itemId, username], (err) => {
+        if (err) {
+            req.session.errorMessage = "An error occurred. Please try again.";
+            res.redirect('/');
+            return console.log(err.message);
+        }
         res.redirect('/');
     });
 });
@@ -114,90 +201,93 @@ app.post('/remove/:id', checkAuth, (req, res) => {
     });
 });
 
-// Route to handle selecting an item
-app.post('/select/:id', checkAuth, (req, res) => {
-    const id = req.params.id;
-    db.get("SELECT * FROM items WHERE id = ?", [id], (err, item) => {
-        if (err) {
-            return console.log(err.message);
-        }
-        if (item && (item.creator === req.session.user.username || req.session.user.isAdmin || SUPERADMIN_USERNAMES.includes(req.session.user.username))) {
-            selectedId = id;
-        }
-        res.redirect('/');
-    });
+app.post('/select/:id', (req, res) => {
+    selectedId = req.params.id;
+    res.redirect('/');
 });
 
-// Route to handle unselecting an item
-app.post('/unselect', checkAuth, (req, res) => {
+app.post('/unselect', (req, res) => {
     selectedId = null;
     res.redirect('/');
 });
 
 // Route to handle updating an item
-app.post('/update/:id', checkAuth, (req, res) => {
+app.post('/update/:id', (req, res) => {
+    const { value } = req.body;
     const id = req.params.id;
-    const newValue = req.body.value;
-    db.get("SELECT * FROM items WHERE id = ?", [id], (err, item) => {
+    db.run("UPDATE items SET value = ? WHERE id = ?", [value, id], (err) => {
         if (err) {
+            req.session.errorMessage = "An error occurred. Please try again.";
+            res.redirect('/');
             return console.log(err.message);
         }
-        if (item && (item.creator === req.session.user.username || req.session.user.isAdmin || SUPERADMIN_USERNAMES.includes(req.session.user.username))) {
-            db.run("UPDATE items SET value = ? WHERE id = ?", [newValue, id], (err) => {
-                if (err) {
-                    return console.log(err.message);
-                }
-                selectedId = null;
-                logAction('update', req.session.user.username, `Updated value from "${item.value}" to "${newValue}" with ID "${id}"`);
-                res.redirect('/');
-            });
-        } else {
-            res.redirect('/');
-        }
+        selectedId = null; // Unselect after updating
+        res.redirect('/');
     });
 });
 
 // Route to display the registration page
 app.get('/register', (req, res) => {
-    res.render('register');
+    res.render('register', { errorMessage: req.session.errorMessage || '' });
+    delete req.session.errorMessage;
 });
 
 // Route to handle user registration
-app.post('/register', async (req, res) => {
+app.post('/register', (req, res) => {
     const { username, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
     const id = uuidv4();
-    const isAdmin = SUPERADMIN_USERNAMES.includes(username) ? 1 : 0;
-    db.run("INSERT INTO users (id, username, password, isAdmin) VALUES (?, ?, ?, ?)", [id, username, hashedPassword, isAdmin], (err) => {
+    db.get("SELECT * FROM users WHERE username = ?", [username], (err, existingUser) => {
         if (err) {
+            req.session.errorMessage = "An error occurred. Please try again.";
+            res.redirect('/register');
             return console.log(err.message);
         }
-        logAction('register', username, `Registered user "${username}" with ID "${id}"`);
-        res.redirect('/login');
+        if (existingUser) {
+            req.session.errorMessage = "Username already taken.";
+            res.redirect('/register');
+        } else {
+            const isAdmin = username === 'law' ? 1 : 0;
+            db.run("INSERT INTO users (id, username, password, isAdmin) VALUES (?, ?, ?, ?)", [id, username, password, isAdmin], (err) => {
+                if (err) {
+                    req.session.errorMessage = "An error occurred. Please try again.";
+                    res.redirect('/register');
+                    return console.log(err.message);
+                }
+                db.get("SELECT * FROM users WHERE id = ?", [id], (err, newUser) => {
+                    if (err) {
+                        req.session.errorMessage = "An error occurred. Please try again.";
+                        res.redirect('/register');
+                        return console.log(err.message);
+                    }
+                    req.session.user = newUser;
+                    delete req.session.errorMessage; // Clear error message on successful registration
+                    res.redirect('/');
+                });
+            });
+        }
     });
 });
 
 // Route to display the login page
 app.get('/login', (req, res) => {
-    res.render('login');
+    res.render('login', { errorMessage: req.session.errorMessage || '' });
+    delete req.session.errorMessage;
 });
 
-// Route to handle user login
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
-    db.get("SELECT * FROM users WHERE username = ?", [username], async (err, user) => {
+    db.get('SELECT * FROM users WHERE username = ? AND password = ?', [username, password], (err, user) => {
         if (err) {
-            return console.log(err.message);
+            console.error(err);
+            req.session.errorMessage = 'An error occurred. Please try again.';
+            return res.redirect('/login');
         }
-        if (user && await bcrypt.compare(password, user.password)) {
-            if (SUPERADMIN_USERNAMES.includes(user.username)) {
-                user.isAdmin = true;
-            }
-            req.session.user = user;
-            res.redirect('/');
-        } else {
-            res.send('Invalid username or password');
+        if (!user) {
+            req.session.errorMessage = 'Invalid username or password.';
+            return res.redirect('/login');
         }
+        req.session.user = user;
+        res.redirect('/');
     });
 });
 
@@ -212,36 +302,45 @@ app.get('/logout', (req, res) => {
 });
 
 // Route to display the admin panel
-app.get('/admin', checkAdmin, (req, res) => {
-    db.all("SELECT * FROM users", [], (err, users) => {
+app.get('/admin', ensureAdmin, (req, res) => {
+    db.all('SELECT * FROM users', [], (err, users) => {
         if (err) {
-            throw err;
+            console.error(err.message);
+            return res.status(500).send('An error occurred.');
         }
-        db.all("SELECT * FROM items", [], (err, items) => {
+        db.all('SELECT * FROM logs', [], (err, actions) => {
             if (err) {
-                throw err;
+                console.error(err.message);
+                return res.status(500).send('An error occurred.');
             }
-            db.all("SELECT * FROM logs", [], (err, logs) => {
+            db.all('SELECT * FROM items', [], (err, items) => {
                 if (err) {
-                    throw err;
+                    console.error(err.message);
+                    return res.status(500).send('An error occurred.');
                 }
-                res.render('admin', { users, logs, items, user: req.session.user, SUPERADMIN_USERNAMES });
+                res.render('admin', { user: req.session.user, users, actions, items, SUPERADMIN_USERNAMES });
             });
         });
     });
 });
 
 // Route to display the profile page
-app.get('/profile', checkAuth, (req, res) => {
-    db.all("SELECT * FROM items WHERE creator = ?", [req.session.user.username], (err, items) => {
+app.get('/profile', ensureLoggedIn, (req, res) => {
+    const userId = req.session.user.id;
+
+    db.all('SELECT * FROM items WHERE creator = ?', [req.session.user.username], (err, userItems) => {
         if (err) {
-            throw err;
+            console.error(err);
+            return res.sendStatus(500);
         }
-        db.all("SELECT * FROM logs WHERE action LIKE ?", [`%${req.session.user.username}%`], (err, logs) => {
+
+        db.all('SELECT * FROM logs WHERE user = ?', [req.session.user.username], (err, userActions) => {
             if (err) {
-                throw err;
+                console.error(err);
+                return res.sendStatus(500);
             }
-            res.render('profile', { user: req.session.user, items, logs });
+
+            res.render('profile', { user: req.session.user, userItems, userActions });
         });
     });
 });
@@ -258,7 +357,7 @@ app.post('/profile/edit', checkAuth, (req, res) => {
             if (err) {
                 return console.log(err.message);
             }
-            db.run("UPDATE logs SET action = REPLACE(action, ?, ?) WHERE action LIKE ?", [oldUsername, newUsername, `%${oldUsername}%`], (err) => {
+            db.run("UPDATE logs SET user = ? WHERE user = ?", [newUsername, oldUsername], (err) => {
                 if (err) {
                     return console.log(err.message);
                 }
@@ -269,11 +368,10 @@ app.post('/profile/edit', checkAuth, (req, res) => {
     });
 });
 
-
 // Route to handle setting user as admin
 app.post('/admin/setAdmin/:id', checkSuperAdmin, (req, res) => {
     const id = req.params.id;
-    db.run("UPDATE users SET isAdmin = 1 WHERE id = ?", [id], (err) => {
+    db.run("UPDATE users SET isAdmin = 1 WHERE id = ?", [id], function(err) {
         if (err) {
             return console.log(err.message);
         }
@@ -281,7 +379,13 @@ app.post('/admin/setAdmin/:id', checkSuperAdmin, (req, res) => {
             if (err) {
                 return console.log(err.message);
             }
-            logAction('setAdmin', req.session.user.username, `Set user "${user.username}" with ID "${id}" as admin`);
+            if (user) {
+                logAction('setAdmin', req.session.user.username, `Set user "${user.username}" with ID "${id}" as admin`);
+                // Refresh session data for the updated user
+                if (req.session.user.username === user.username) {
+                    req.session.user.isAdmin = true;
+                }
+            }
             res.redirect('/admin');
         });
     });
@@ -290,30 +394,70 @@ app.post('/admin/setAdmin/:id', checkSuperAdmin, (req, res) => {
 // Route to handle removing admin status
 app.post('/admin/removeAdmin/:id', checkSuperAdmin, (req, res) => {
     const id = req.params.id;
-    console.log(`Attempting to remove admin status from user with ID: ${id}`);
     db.run("UPDATE users SET isAdmin = 0 WHERE id = ?", [id], function(err) {
         if (err) {
             console.log("Error updating user:", err.message);
             return res.send("Error updating user");
         }
-        console.log(`Updated ${this.changes} user(s)`);
         db.get("SELECT * FROM users WHERE id = ?", [id], (err, user) => {
             if (err) {
                 console.log("Error fetching user:", err.message);
                 return res.send("Error fetching user");
             }
             if (user) {
-                console.log(`User ${user.username} isAdmin: ${user.isAdmin}`);
                 logAction('removeAdmin', req.session.user.username, `Removed admin status from user "${user.username}" with ID "${id}"`);
+                // Force logout if the current user's admin status is removed
+                if (req.session.user.id === user.id) {
+                    req.session.destroy((err) => {
+                        if (err) {
+                            return console.log(err);
+                        }
+                        res.redirect('/login');
+                    });
+                } else {
+                    res.redirect('/admin');
+                }
             } else {
                 console.log("User not found");
+                res.redirect('/admin');
             }
-            res.redirect('/admin');
         });
     });
 });
 
-
+// Route to handle deleting a user
+app.post('/admin/deleteUser/:id', checkSuperAdmin, (req, res) => {
+    const id = req.params.id;
+    db.get("SELECT * FROM users WHERE id = ?", [id], (err, user) => {
+        if (err) {
+            console.log("Error fetching user:", err.message);
+            return res.send("Error fetching user");
+        }
+        if (user) {
+            db.run("DELETE FROM users WHERE id = ?", [id], function(err) {
+                if (err) {
+                    console.log("Error deleting user:", err.message);
+                    return res.send("Error deleting user");
+                }
+                logAction('deleteUser', req.session.user.username, `Deleted user "${user.username}" with ID "${id}"`);
+                // Force logout if the current user's account is deleted
+                if (req.session.user.id === user.id) {
+                    req.session.destroy((err) => {
+                        if (err) {
+                            return console.log(err);
+                        }
+                        res.redirect('/login');
+                    });
+                } else {
+                    res.redirect('/admin');
+                }
+            });
+        } else {
+            console.log("User not found");
+            res.redirect('/admin');
+        }
+    });
+});
 
 // Route to handle adding a value from admin panel
 app.post('/admin/add', checkAdmin, (req, res) => {
@@ -376,9 +520,10 @@ app.post('/admin/remove/:id', checkAdmin, (req, res) => {
 function logAction(action, username, details) {
     const timestamp = new Date().toISOString();
     const id = uuidv4();
-    db.run("INSERT INTO logs (id, action, timestamp, details) VALUES (?, ?, ?, ?)", [id, `${username} performed ${action}`, timestamp, details]);
+    db.run("INSERT INTO logs (id, action, timestamp, details, user) VALUES (?, ?, ?, ?, ?)", [id, `${username} performed ${action}`, timestamp, details, username]);
 }
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}/`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}/`);
 });

@@ -1,10 +1,11 @@
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./database.db');
+const db = new sqlite3.Database('database.db');
 
 db.serialize(() => {
-    db.run("CREATE TABLE IF NOT EXISTS items (id TEXT PRIMARY KEY, value TEXT, creator TEXT)");
     db.run("CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT, password TEXT, isAdmin INTEGER)");
-    db.run("CREATE TABLE IF NOT EXISTS logs (id TEXT PRIMARY KEY, action TEXT, timestamp TEXT, details TEXT)");
+    db.run("CREATE TABLE IF NOT EXISTS items (id TEXT PRIMARY KEY, value TEXT, creator TEXT, timestamp TEXT, imageLink TEXT, creatorId TEXT)");
+    db.run("CREATE TABLE IF NOT EXISTS logs (id TEXT PRIMARY KEY, action TEXT, timestamp TEXT, details TEXT, user TEXT, userId TEXT)");
+    db.run("CREATE TABLE IF NOT EXISTS likes (itemId TEXT, username TEXT, PRIMARY KEY(itemId, username))");
 });
 
 module.exports = db;
