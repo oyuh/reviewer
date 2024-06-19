@@ -1,149 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Home</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Stored Values</title>
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--background-color, white);
-            color: var(--text-color, black);
-            transition: background-color 0.3s, color 0.3s;
-        }
-        .center-content {
-            text-align: center;
-            margin-top: 50px;
-        }
-        .highlight {
-            background-color: yellow;
-        }
-        .transparent-id {
-            opacity: 0.5;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background-color: var(--header-background-color, #f1f1f1);
-            transition: background-color 0.3s;
-        }
-        .header a {
-            margin-left: 10px;
-            text-decoration: none;
-            color: var(--header-link-color, black);
-            transition: color 0.3s;
-        }
-        .header a:hover {
-            text-decoration: underline;
-        }
-        .header-right {
-            display: flex;
-            align-items: center;
-        }
-        .header-right span {
-            background: linear-gradient(to right, #4a00e0, #8e2de2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .post {
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-bottom: 10px;
-            background-color: var(--post-background-color, #fafafa);
-            color: var(--post-text-color, black);
-            transition: background-color 0.3s, color 0.3s;
-        }
-        .post-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
-        }
-        .post-author {
-            font-weight: bold;
-        }
-        .post-timestamp {
-            color: #999;
-            font-size: 0.9em;
-        }
-        .post-content {
-            font-size: 1.1em;
-        }
-        .post-image {
-            max-width: 100%;
-            height: auto;
-            margin-top: 10px;
-        }
-        .actions {
-            margin-top: 10px;
-        }
-        .btn {
-            display: inline-block;
-            padding: 8px 12px;
-            margin: 4px 0;
-            font-size: 16px;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-            outline: none;
-            color: #fff;
-            background: linear-gradient(to right, #4a00e0, #8e2de2);
-            border: none;
-            border-radius: 5px;
-            transition: background 0.3s;
-        }
-        .btn:hover {
-            background: linear-gradient(to right, #3b00b8, #6b24d6);
-        }
-        .btn:active {
-            background: linear-gradient(to right, #3b00b8, #6b24d6);
-            transform: translateY(2px);
-        }
-        .btn-delete {
-            background: linear-gradient(to right, #e60000, #ff0000);
-        }
-        .btn-delete:hover {
-            background: linear-gradient(to right, #b30000, #cc0000);
-        }
-        .btn-delete:active {
-            background: linear-gradient(to right, #b30000, #cc0000);
-        }
-        input, button {
-            padding: 10px;
-            margin: 5px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
-        }
-        button {
-            background: linear-gradient(to right, #4a00e0, #8e2de2);
-            color: white;
-            cursor: pointer;
-        }
-        button:hover {
-            background: linear-gradient(to right, #3b00b8, #6b24d6);
-        }
-        .dark-mode-toggle {
-            background-color: #333;
-            color: #fff;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-left: 10px;
-        }
-        .dark-mode-toggle:hover {
-            background-color: #555;
-        }
-        .post-link {
-            color: #3498db;
-            text-decoration: none;
-        }
-        .post-link:hover {
-            text-decoration: underline;
-        }
         .modal {
             display: none;
             position: fixed;
@@ -153,18 +16,16 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgb(0, 0, 0);
-            background-color: rgba(0, 0, 0, 0.4);
-            padding-top: 60px;
+            background-color: rgba(0,0,0,0.4);
         }
         .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
+            background-color: #2d3748;
+            margin: 10% auto;
             padding: 20px;
             border: 1px solid #888;
             width: 80%;
             max-width: 600px;
-            text-align: center;
+            border-radius: 8px;
         }
         .close {
             color: #aaa;
@@ -174,196 +35,200 @@
         }
         .close:hover,
         .close:focus {
-            color: black;
+            color: #000;
             text-decoration: none;
             cursor: pointer;
         }
-        :root {
-            --background-color: white;
-            --text-color: black;
-            --header-background-color: #f1f1f1;
-            --header-link-color: black;
-            --post-background-color: #fafafa;
-            --post-text-color: black;
+        .post-image {
+            max-height: 300px;
+            margin-left: 20px;
         }
-        [data-theme='dark'] {
-            --background-color: #121212;
-            --text-color: #e0e0e0;
-            --header-background-color: #1e1e1e;
-            --header-link-color: #e0e0e0;
-            --post-background-color: #1e1e1e;
-            --post-text-color: #e0e0e0;
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background-color: #1a202c;
+            text-align: center;
+            padding: 10px 0;
         }
     </style>
 </head>
-<body>
-    <header class="header">
-        <div class="header-left">
-            <a href="/">Home</a>
-            <button class="dark-mode-toggle">Toggle Dark Mode</button>
-        </div>
-        <div class="header-right">
+<body class="bg-gray-900 text-white">
+
+    <!-- Header -->
+    <nav class="bg-gray-800 p-4 flex justify-between items-center">
+        <a href="/" class="text-2xl"><i class="fas fa-home"></i></a>
+        <div>
             <% if (user) { %>
-                <span style="color: rgb(0, 166, 255); background: linear-gradient(to right, #4a00e0, #8e2de2); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Hello, <%= user.username %>!</span>
-                <a href="/logout">Logout</a>
-                <a href="/profile">Profile</a>
+                <a href="/profile" class="mr-4"><%= user.username %></a>
+                <a href="/logout" class="mr-4">Logout</a>
                 <% if (user.isAdmin) { %>
-                    <a href="/admin">Admin</a>
+                    <a href="/admin" class="mr-4">Admin</a>
                 <% } %>
             <% } else { %>
-                <a href="/login">Login</a>
+                <a href="/login" class="mr-4">Login</a>
                 <a href="/register">Register</a>
             <% } %>
         </div>
-    </header>
-    <div class="center-content">
-        <h1>Posts</h1>
+    </nav>
 
-        <form id="filter-form" action="/" method="GET">
-            <label for="filter-user">Filter by User:</label>
-            <select id="filter-user" name="filter-user">
-                <option value="">All</option>
-                <% items.map(item => item.creator).filter((v, i, a) => a.indexOf(v) === i).forEach(creator => { %>
-                    <option value="<%= creator %>"><%= creator %></option>
-                <% }) %>
+    <!-- Main Content -->
+    <div class="container mx-auto p-4 min-h-screen pb-20">
+        <h1 class="text-3xl text-center mb-8">Review</h1>
+
+        <div class="flex justify-center mb-4">
+            <button onclick="openModal('filterModal')" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded mx-2">Toggle Filter</button>
+            <button onclick="openModal('addPostModal')" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded mx-2">Add a New Value</button>
+        </div>
+
+        <form id="category-select-form" class="mb-4 text-center">
+            <label for="category-select" class="mr-2">Select Category:</label>
+            <select id="category-select" name="category" class="bg-gray-700 text-white py-1 px-2 rounded" onchange="document.getElementById('category-select-form').submit()">
+                <option value="category1" <%= selectedCategory === 'category1' ? 'selected' : '' %>>Category 1</option>
+                <option value="category2" <%= selectedCategory === 'category2' ? 'selected' : '' %>>Category 2</option>
+                <option value="category3" <%= selectedCategory === 'category3' ? 'selected' : '' %>>Category 3</option>
             </select>
-            <label for="filter-date">Filter by Date:</label>
-            <input type="date" id="filter-date" name="filter-date">
-            <button type="submit">Filter</button>
         </form>
 
-        <div class="posts">
-            <% items.forEach(item => { %>
-                <div class="post <%= item.id === selectedId ? 'highlight' : '' %>">
-                    <div class="post-header">
-                        <div class="post-author"><%= item.creator %></div>
-                        <div class="post-timestamp"><%= new Date(item.timestamp).toLocaleString() %></div>
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <% categorizedItems[selectedCategory].forEach(item => { %>
+                <div class="bg-gray-700 p-4 mb-4 rounded-lg shadow-lg flex items-start">
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="text-gray-400" ><a href="/profile/<%= item.creator %>" class="text-blue-400 hover:underline"><%= item.creator %></a> <%= new Date(item.timestamp).toLocaleString() %></div>
+                            <div class="relative">
+                                <button onclick="toggleDropdown('dropdown-<%= item.id %>')" class="text-gray-400"><i class="fas fa-ellipsis-v"></i></button>
+                                <div id="dropdown-<%= item.id %>" class="dropdown-content hidden absolute right-0 bg-gray-800 text-white py-2 rounded shadow-lg">
+                                    <form action="/remove/<%= item.id %>" method="POST">
+                                        <button type="submit" class="block w-full text-left px-4 py-2">Remove</button>
+                                    </form>
+                                    <button type="button" onclick="openEditModal('<%= item.id %>', '<%= item.value %>', '<%= item.imageLink %>')" class="block w-full text-left px-4 py-2">Edit</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-2xl mb-4"><%= item.value %></div>
+                        <div class="flex justify-between items-center">
+                            <form action="<%= userLikes[item.id] ? '/unlike/' : '/like/' %><%= item.id %>" method="POST">
+                                <button type="submit" class="focus:outline-none">
+                                    <i class="fas fa-heart <%= userLikes[item.id] ? 'text-red-500' : 'text-white' %>"></i>
+                                </button>
+                            </form>
+                            <div><%= likes[item.id] && likes[item.id].length > 0 ? 'Liked by: ' + likes[item.id].join(', ') : 'No likes yet!' %></div>
+                        </div>
                     </div>
-                    <div class="post-content"><%= item.value %></div>
                     <% if (item.imageLink) { %>
                         <img src="<%= item.imageLink %>" alt="Post Image" class="post-image">
-                    <% } %>
-                    <div>
-                        <a href="#<%= item.id %>" class="post-link">Link to Post</a>
-                    </div>
-                    <% if (item.id === selectedId) { %>
-                        <span class="transparent-id"> (ID: <%= item.id %>, Created by: <%= item.creator %>) </span>
-                        <% if (user && (user.username === item.creator || user.isAdmin)) { %>
-                            <form action="/update/<%= item.id %>" method="POST" style="display:inline;">
-                                <input type="text" name="value" value="<%= item.value %>" required>
-                                <button type="submit" class="btn">Save</button>
-                            </form>
-                            <form action="/unselect" method="POST" style="display:inline;">
-                                <button type="submit" class="btn">Unselect</button>
-                            </form>
-                        <% } else { %>
-                            <form action="/unselect" method="POST" style="display:inline;">
-                                <button type="submit" class="btn">Unselect</button>
-                            </form>
-                        <% } %>
-                    <% } else if (user && (user.username === item.creator || user.isAdmin)) { %>
-                        <div class="actions">
-                            <form action="/select/<%= item.id %>" method="POST" style="display:inline;">
-                                <button type="submit" class="btn">Edit</button>
-                            </form>
-                            <form action="/remove/<%= item.id %>" method="POST" style="display:inline;">
-                                <button type="submit" class="btn btn-delete">Delete</button>
-                            </form>
-                        </div>
-                    <% } %>
-                    <div class="actions">
-                        <% if (user && userLikes[item.id]) { %>
-                            <form action="/unlike/<%= item.id %>" method="POST" style="display:inline;">
-                                <button type="submit" class="btn">Unlike</button>
-                            </form>
-                        <% } else if (user) { %>
-                            <form action="/like/<%= item.id %>" method="POST" style="display:inline;">
-                                <button type="submit" class="btn">Like</button>
-                            </form>
-                        <% } %>
-                    </div>
-                    <% if (likes[item.id] && likes[item.id].length > 0) { %>
-                        <div class="likes">
-                            <strong>Liked by:</strong> <%= likes[item.id].join(', ') %>
-                        </div>
                     <% } %>
                 </div>
             <% }) %>
         </div>
-
-        <% if (user) { %>
-            <h2>Add a New Post</h2>
-            <form action="/add" method="POST">
-                <input type="text" name="value" placeholder="Write something..." required>
-                <input type="text" name="imageLink" placeholder="Image URL (optional)">
-                <button type="submit" class="btn">Add</button>
-            </form>
-        <% } %>
     </div>
-    <div id="errorModal" class="modal">
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 p-4 text-center mt-auto">
+        <p>Lawson Hart | &copy; 2024 </p>
+    </footer>
+
+    <!-- Filter Modal -->
+    <div id="filterModal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <p id="errorMessage"></p>
+            <span class="close" onclick="closeModal('filterModal')">&times;</span>
+            <h2 class="text-2xl mb-4">Filter</h2>
+            <form action="/" method="GET">
+                <label for="filter-user" class="block mb-2">Filter by User:</label>
+                <select id="filter-user" name="filter-user" class="bg-gray-700 text-white py-1 px-2 rounded w-full mb-4">
+                    <option value="">All</option>
+                    <% if (items && items.length > 0) { %>
+                        <% items.map(item => item.creator).filter((v, i, a) => a.indexOf(v) === i).forEach(creator => { %>
+                            <option value="<%= creator %>"><%= creator %></option>
+                        <% }) %>
+                    <% } %>
+                </select>
+                <label for="filter-date" class="block mb-2">Filter by Date:</label>
+                <input type="date" id="filter-date" name="filter-date" class="bg-gray-700 text-white py-1 px-2 rounded w-full mb-4">
+                <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded w-full">Filter</button>
+            </form>
         </div>
     </div>
+
+    <!-- Add Post Modal -->
+    <div id="addPostModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addPostModal')">&times;</span>
+            <h2 class="text-2xl mb-4">Add a New Value</h2>
+            <form action="/add" method="POST">
+                <label for="value" class="block mb-2">Value:</label>
+                <input type="text" name="value" id="value" required class="bg-gray-700 text-white py-1 px-2 rounded w-full mb-4">
+                <label for="category" class="block mb-2">Category:</label>
+                <select name="category" id="category" required class="bg-gray-700 text-white py-1 px-2 rounded w-full mb-4">
+                    <option value="category1">Category 1</option>
+                    <option value="category2">Category 2</option>
+                    <option value="category3">Category 3</option>
+                </select>
+                <label for="imageUrl" class="block mb-2">Image URL (optional):</label>
+                <input type="text" name="imageUrl" id="imageUrl" class="bg-gray-700 text-white py-1 px-2 rounded w-full mb-4">
+                <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded w-full">Add</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Post Modal -->
+    <% categorizedItems[selectedCategory].forEach(item => { %>
+        <div id="editModal-<%= item.id %>" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeEditModal('<%= item.id %>')">&times;</span>
+                <h2 class="text-2xl mb-4">Edit Post</h2>
+                <form id="edit-form-<%= item.id %>" action="/update/<%= item.id %>" method="POST">
+                    <input type="hidden" name="id" value="<%= item.id %>">
+                    <label for="edit-value-<%= item.id %>" class="block mb-2">Value:</label>
+                    <input type="text" name="value" id="edit-value-<%= item.id %>" value="<%= item.value %>" required class="bg-gray-700 text-white py-1 px-2 rounded w-full mb-4">
+                    <label for="edit-category-<%= item.id %>" class="block mb-2">Category:</label>
+                    <select name="category" id="edit-category-<%= item.id %>" required class="bg-gray-700 text-white py-1 px-2 rounded w-full mb-4">
+                        <option value="category1" <%= item.category === 'category1' ? 'selected' : '' %>>Category 1</option>
+                        <option value="category2" <%= item.category === 'category2' ? 'selected' : '' %>>Category 2</option>
+                        <option value="category3" <%= item.category === 'category3' ? 'selected' : '' %>>Category 3</option>
+                    </select>
+                    <label for="edit-imageUrl-<%= item.id %>" class="block mb-2">Image URL (optional):</label>
+                    <input type="text" name="imageUrl" id="edit-imageUrl-<%= item.id %>" value="<%= item.imageLink %>" class="bg-gray-700 text-white py-1 px-2 rounded w-full mb-4">
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded w-full">Save</button>
+                </form>
+            </div>
+        </div>
+    <% }) %>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const toggleButton = document.querySelector('.dark-mode-toggle');
-            const currentTheme = localStorage.getItem('theme');
-            if (currentTheme) {
-                document.documentElement.setAttribute('data-theme', currentTheme);
-                if (currentTheme === 'dark') {
-                    document.documentElement.style.setProperty('--background-color', '#121212');
-                    document.documentElement.style.setProperty('--text-color', '#e0e0e0');
-                    document.documentElement.style.setProperty('--post-background-color', '#1e1e1e');
-                    document.documentElement.style.setProperty('--post-text-color', '#e0e0e0');
-                } else {
-                    document.documentElement.style.setProperty('--background-color', 'white');
-                    document.documentElement.style.setProperty('--text-color', 'black');
-                    document.documentElement.style.setProperty('--post-background-color', '#fafafa');
-                    document.documentElement.style.setProperty('--post-text-color', 'black');
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function openEditModal(id, value, imageUrl) {
+            openModal('editModal-' + id);
+        }
+
+        function closeEditModal(id) {
+            closeModal('editModal-' + id);
+        }
+
+        function toggleDropdown(dropdownId) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.id !== dropdownId) {
+                    openDropdown.classList.add("hidden");
                 }
             }
+            document.getElementById(dropdownId).classList.toggle("hidden");
+        }
 
-            toggleButton.addEventListener('click', () => {
-                let theme = document.documentElement.getAttribute('data-theme');
-                if (theme === 'dark') {
-                    document.documentElement.setAttribute('data-theme', 'light');
-                    localStorage.setItem('theme', 'light');
-                    document.documentElement.style.setProperty('--background-color', 'white');
-                    document.documentElement.style.setProperty('--text-color', 'black');
-                    document.documentElement.style.setProperty('--post-background-color', '#fafafa');
-                    document.documentElement.style.setProperty('--post-text-color', 'black');
-                } else {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                    localStorage.setItem('theme', 'dark');
-                    document.documentElement.style.setProperty('--background-color', '#121212');
-                    document.documentElement.style.setProperty('--text-color', '#e0e0e0');
-                    document.documentElement.style.setProperty('--post-background-color', '#1e1e1e');
-                    document.documentElement.style.setProperty('--post-text-color', '#e0e0e0');
-                }
-            });
-
-            // Modal for error messages
-            const modal = document.getElementById("errorModal");
-            const span = document.getElementsByClassName("close")[0];
-
-            span.onclick = function() {
-                modal.style.display = "none";
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                closeModal(event.target.id);
             }
-
-            window.onclick = function(event) {
-                if (event.target == modal) {
-                    modal.style.display = "none";
-                }
-            }
-
-            // Show error modal if there is an error
-            <% if (errorMessage) { %>
-                document.getElementById('errorMessage').textContent = "<%= errorMessage %>";
-                modal.style.display = "block";
-            <% } %>
-        });
+        }
     </script>
 </body>
 </html>
