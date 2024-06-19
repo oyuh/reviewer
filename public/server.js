@@ -2,6 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
 const path = require('path');
+const timestamp = new Date().toISOString();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,6 +13,7 @@ const itemController = require('../controllers/itemController');
 const logController = require('../controllers/logController');
 const adminController = require('../controllers/adminController');
 const profileController = require('../controllers/profileController');
+const { timeStamp } = require('console');
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -45,12 +47,12 @@ app.get('/profile/:username', authController.ensureLoggedIn, profileController.g
 app.post('/profile/editPost', authController.ensureLoggedIn, profileController.editPost);
 
 app.get('/admin', authController.ensureAdmin, adminController.getAdminPage);
-app.post('/admin/editUser', authController.ensureAdmin, adminController.editUser);
-app.post('/admin/removeUser', authController.ensureAdmin, adminController.removeUser);
+app.post('/admin/update-username', authController.ensureAdmin, adminController.updateUsername);
+app.post('/admin/remove-user', authController.ensureAdmin, adminController.removeUser);
 app.post('/admin/editPost', authController.ensureAdmin, adminController.editPost);
 app.post('/admin/removePost', authController.ensureAdmin, adminController.removePost);
 
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Server running on port ${PORT} at ${timestamp}...`);
 });

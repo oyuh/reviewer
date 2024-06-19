@@ -17,7 +17,7 @@ exports.getAdminPage = (req, res) => {
                 posts = [];
             }
 
-            db.all('SELECT * FROM logs', (err, logs) => {
+            db.all('SELECT * FROM logs ORDER BY timestamp DESC', (err, logs) => {
                 if (err) {
                     console.error('Error fetching logs:', err);
                     req.session.errorMessage = "An error occurred while fetching logs.";
@@ -25,10 +25,10 @@ exports.getAdminPage = (req, res) => {
                 }
 
                 res.render('admin', {
-                    user: req.session.user,
-                    logs,
+                    sessionUser: req.session.user,
                     users,
                     posts,
+                    logs,
                     errorMessage: req.session.errorMessage,
                     SUPERADMIN_USERNAMES
                 });
@@ -38,32 +38,65 @@ exports.getAdminPage = (req, res) => {
     });
 };
 
-exports.editUser = (req, res) => {
-    const { id, username } = req.body;
+exports.updateUsername = (req, res) => {
+    const { userId, newUsername } = req.body;
 
-    db.run("UPDATE users SET username = ? WHERE id = ?", [username, id], (err) => {
+    db.run('UPDATE users SET username = ? WHERE id = ?', [newUsername, userId], function (err) {
         if (err) {
-            console.error('Error updating user:', err);
-            req.session.errorMessage = 'An error occurred while updating the user.';
-            logAction('edit_user_error', err.message, req.session.user.username, req.session.user.id);
-        } else {
-            logAction('edit_user', 'User updated successfully', req.session.user.username, req.session.user.id);
+            console.error('Error updating username:', err);
+            return res.redirect('/admin');
         }
+
+        db.run('UPDATE items SET creator = ? WHERE creatorId = ?', [newUsername, userId], function (err) {
+            if (err) {
+                console.error('Error updating items:', err);
+            }
+        });
+
+        db.run('UPDATE likes SET username = ? WHERE userId = ?', [newUsername, userId], function (err) {
+            if (err) {
+                console.error('Error updating likes:', err);
+            }
+        });
+
+        db.run('UPDATE logs SET user = ? WHERE userId = ?', [newUsername, userId], function (err) {
+            if (err) {
+                console.error('Error updating logs:', err);
+            }
+        });
+
+        req.session.user.username = newUsername;
         res.redirect('/admin');
     });
 };
 
 exports.removeUser = (req, res) => {
-    const { id } = req.body;
+    const { userId } = req.body;
 
-    db.run("DELETE FROM users WHERE id = ?", [id], (err) => {
+    db.run('DELETE FROM users WHERE id = ?', [userId], function (err) {
         if (err) {
             console.error('Error removing user:', err);
-            req.session.errorMessage = 'An error occurred while removing the user.';
-            logAction('remove_user_error', err.message, req.session.user.username, req.session.user.id);
-        } else {
-            logAction('remove_user', 'User removed successfully', req.session.user.username, req.session.user.id);
+            return res.redirect('/admin');
         }
+
+        db.run('DELETE FROM items WHERE creatorId = ?', [userId], function (err) {
+            if (err) {
+                console.error('Error removing user items:', err);
+            }
+        });
+
+        db.run('DELETE FROM likes WHERE userId = ?', [userId], function (err) {
+            if (err) {
+                console.error('Error removing user likes:', err);
+            }
+        });
+
+        db.run('DELETE FROM logs WHERE userId = ?', [userId], function (err) {
+            if (err) {
+                console.error('Error removing user logs:', err);
+            }
+        });
+
         res.redirect('/admin');
     });
 };
