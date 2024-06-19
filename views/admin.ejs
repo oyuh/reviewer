@@ -1,16 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        *::-webkit-scrollbar-track
+        {
+            -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+            border-radius: 10px;
+            background-color: #252525;
+        }
+
+        *::-webkit-scrollbar
+        {
+            width: 12px;
+            background-color: #252525;
+        }
+
+        *::-webkit-scrollbar-thumb
+        {
+            border-radius: 10px;
+            -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+            background-color: #777777;
+        }
+
+        .card {
+            background-color: #2d3748;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .card-header {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .card-body input, .card-body textarea {
+            background-color: #4a5568;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            color: white;
+        }
+
+        .card-actions {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .scrollable-card {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 16px;
+        }
+    </style>
 </head>
 <body class="bg-gray-900 text-white">
-    <header class="flex items-center justify-between p-4 bg-gray-800">
+    <header class="flex justify-between items-center p-4 bg-gray-800">
         <div>
-            <a href="/" class="text-xl font-bold text-white"><i class="fas fa-home"></i></a>
+            <a href="/" class="text-xl"><i class="fas fa-home"></i></a>
         </div>
         <div class="flex items-center">
             <% if (sessionUser) { %>
@@ -25,111 +81,87 @@
             <% } %>
         </div>
     </header>
-    <div class="container mx-auto mt-10">
-        <h1 class="text-3xl font-bold mb-6 text-center">Admin Panel</h1>
-        
-        <% if (errorMessage) { %>
-            <div class="text-red-500 text-center mb-4"><%= errorMessage %></div>
-        <% } %>
 
-        <h2 class="text-2xl font-semibold mb-4">Users</h2>
-        <div class="overflow-x-auto mb-8">
-            <table class="min-w-full bg-gray-800 rounded-lg overflow-hidden">
-                <thead>
-                    <tr>
-                        <th class="px-4 py-2 bg-gray-700 text-left">Username</th>
-                        <th class="px-4 py-2 bg-gray-700 text-left">User ID</th>
-                        <th class="px-4 py-2 bg-gray-700 text-left">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% users.forEach(user => { %>
-                    <tr class="border-t border-gray-600">
-                        <td class="px-4 py-2 text-center">
-                            <form action="/admin/update-username" method="POST">
+    <div class="container mx-auto my-8">
+        <h1 class="text-3xl mb-6">Admin Panel</h1>
+
+        <div class="mb-8">
+            <h2 class="text-2xl mb-4">Users</h2>
+            <div class="scrollable-card">
+                <% users.forEach(user => { %>
+                    <div class="card">
+                        <div class="card-header">User ID: <%= user.id %></div>
+                        <div class="card-body">
+                            <label>Username:</label>
+                            <form action="/admin/update-username" method="POST" class="flex gap-4">
                                 <input type="hidden" name="userId" value="<%= user.id %>">
-                                <input type="text" name="newUsername" value="<%= user.username %>" class="bg-gray-800 text-white p-2 rounded">
-                        </td>
-                        <td class="px-4 py-2 text-center"><%= user.id %></td>
-                        <td class="px-4 py-2 text-center">
-                                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded ml-2">Edit</button>
+                                <input type="text" name="newUsername" value="<%= user.username %>" class="w-full">
+                                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Update</button>
                             </form>
-                            <form action="/admin/remove-user" method="POST" class="inline-block">
-                                <input type="hidden" name="userId" value="<%= user.id %>">
-                                <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded ml-2">Remove</button>
-                            </form>
-                        </td>
-                    </tr>
-                    <% }) %>
-                </tbody>
-            </table>
+                            <div class="card-actions">
+                                <form action="/admin/remove-user" method="POST" class="inline-block">
+                                    <input type="hidden" name="userId" value="<%= user.id %>">
+                                    <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded">Remove</button>
+                                </form>
+                                <% if (sessionUser.username !== user.username && sessionUser.isAdmin && SUPERADMIN_USERNAMES.includes(sessionUser.username)) { %>
+                                    <form action="/admin/set-admin" method="POST" class="inline-block">
+                                        <input type="hidden" name="userId" value="<%= user.id %>">
+                                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Set Admin</button>
+                                    </form>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
         </div>
 
-        <h2 class="text-2xl font-semibold mb-4">Posts</h2>
-        <div class="overflow-x-auto mb-8">
-            <table class="min-w-full bg-gray-800 rounded-lg overflow-hidden">
-                <thead>
-                    <tr>
-                        <th class="px-4 py-2 bg-gray-700 text-left">Post</th>
-                        <th class="px-4 py-2 bg-gray-700 text-left">Creator</th>
-                        <th class="px-4 py-2 bg-gray-700 text-left">Post ID</th>
-                        <th class="px-4 py-2 bg-gray-700 text-left">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% posts.forEach(post => { %>
-                    <tr class="border-t border-gray-600">
-                        <td class="px-4 py-2 text-center">
+        <div class="mb-8">
+            <h2 class="text-2xl mb-4">Posts</h2>
+            <div class="scrollable-card">
+                <% posts.forEach(post => { %>
+                    <div class="card">
+                        <div class="card-header">Post ID: <%= post.id %></div>
+                        <div class="card-body">
                             <form action="/admin/update-post" method="POST">
-                                <input type="hidden" name="postId" value="<%= post.id %>">
-                                <input type="text" name="postValue" value="<%= post.value %>" class="bg-gray-800 text-white p-2 rounded w-full">
-                                <input type="text" name="postImageLinks" value="<%= post.imageLink %>" class="bg-gray-800 text-white p-2 rounded w-full">
-                        </td>
-                        <td class="px-4 py-2 text-center">
-                            <input type="hidden" name="creatorId" value="<%= post.creatorId %>">
-                            <input type="text" name="creator" value="<%= post.creator %>" class="bg-gray-800 text-white p-2 rounded">
-                        </td>
-                        <td class="px-4 py-2 text-center"><%= post.id %></td>
-                        <td class="px-4 py-2 text-center">
-                                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded ml-2">Edit</button>
+                                <label>Value:</label>
+                                <textarea name="value" class="w-full"><%= post.value %></textarea>
+                                <label>Image Link:</label>
+                                <input type="text" name="imageLink" value="<%= post.imageLink %>" class="w-full">
+                                <label>Creator:</label>
+                                <input type="text" name="creator" value="<%= post.creator %>" class="w-full">
+                                <input type="hidden" name="id" value="<%= post.id %>">
+                                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded w-full mt-2">Update</button>
                             </form>
-                            <form action="/admin/remove-post" method="POST" class="inline-block">
-                                <input type="hidden" name="postId" value="<%= post.id %>">
-                                <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded ml-2">Remove</button>
+                            <form action="/admin/remove-post" method="POST" class="inline-block mt-2">
+                                <input type="hidden" name="id" value="<%= post.id %>">
+                                <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded w-full">Remove</button>
                             </form>
-                        </td>
-                    </tr>
-                    <% }) %>
-                </tbody>
-            </table>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
         </div>
 
-        <h2 class="text-2xl font-semibold mb-4">Logs</h2>
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-gray-800 rounded-lg overflow-hidden">
-                <thead>
-                    <tr>
-                        <th class="px-4 py-2 bg-gray-700 text-left">Timestamp</th>
-                        <th class="px-4 py-2 bg-gray-700 text-left">Action</th>
-                        <th class="px-4 py-2 bg-gray-700 text-left">Details</th>
-                        <th class="px-4 py-2 bg-gray-700 text-left">User</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% logs.forEach(log => { %>
-                    <tr class="border-t border-gray-600">
-                        <td class="px-4 py-2"><%= log.timestamp %></td>
-                        <td class="px-4 py-2"><%= log.action %></td>
-                        <td class="px-4 py-2"><%= log.details %></td>
-                        <td class="px-4 py-2"><%= log.user %></td>
-                    </tr>
-                    <% }) %>
-                </tbody>
-            </table>
+        <div>
+            <h2 class="text-2xl mb-4">Logs</h2>
+            <div class="scrollable-card">
+                <% logs.forEach(log => { %>
+                    <div class="card">
+                        <div class="card-header">Timestamp: <%= new Date(log.timestamp).toLocaleString() %></div>
+                        <div class="card-body">
+                            <p><strong>Action:</strong> <%= log.action %></p>
+                            <p><strong>Details:</strong> <%= log.details %></p>
+                            <p><strong>User:</strong> <%= log.user %></p>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
         </div>
     </div>
-    <footer class="flex justify-center p-4 bg-gray-800 mt-10">
-        © 2024
+
+    <footer class="bg-gray-800 text-white text-center p-4 mt-8">
+        &copy; 2024
     </footer>
 </body>
 </html>

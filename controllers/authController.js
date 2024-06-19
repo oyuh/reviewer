@@ -100,6 +100,13 @@ exports.registerPage = (req, res) => {
     delete req.session.errorMessage;
 };
 
+exports.ensureSuperAdmin = (req, res, next) => {
+    if (!req.session.user || !SUPERADMIN_USERNAMES.includes(req.session.user.username)) {
+        return res.redirect('/login');
+    }
+    next();
+};
+
 function logAction(action, details, username, userId = null) {
     const id = uuidv4();
     const timestamp = new Date().toISOString();
@@ -111,3 +118,5 @@ function logAction(action, details, username, userId = null) {
         }
     });
 }
+
+
