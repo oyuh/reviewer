@@ -7,35 +7,35 @@ exports.getProfile = (req, res) => {
     db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
         if (err) {
             console.error('Error fetching user:', err);
-            return res.render('error', { errorMessage: 'An error occurred while fetching user data.' });
+            return res.render('error', { errorMessage: 'An error occurred while fetching user data.', sessionUser: req.session.user });
         }
 
         if (!user) {
-            return res.render('error', { errorMessage: 'User not found.' });
+            return res.render('error', { errorMessage: 'User not found.', sessionUser: req.session.user });
         }
 
         db.all('SELECT * FROM items WHERE creator = ?', [username], (err, posts) => {
             if (err) {
                 console.error('Error fetching posts:', err);
-                return res.render('error', { errorMessage: 'An error occurred while fetching posts.' });
+                return res.render('error', { errorMessage: 'An error occurred while fetching posts.', sessionUser: req.session.user });
             }
 
             db.get('SELECT COUNT(*) as postCount FROM items WHERE creator = ?', [username], (err, postCount) => {
                 if (err) {
                     console.error('Error fetching post count:', err);
-                    return res.render('error', { errorMessage: 'An error occurred while fetching post count.' });
+                    return res.render('error', { errorMessage: 'An error occurred while fetching post count.', sessionUser: req.session.user });
                 }
 
                 db.get('SELECT COUNT(*) as likeCount FROM likes WHERE username = ?', [username], (err, likeCount) => {
                     if (err) {
                         console.error('Error fetching like count:', err);
-                        return res.render('error', { errorMessage: 'An error occurred while fetching like count.' });
+                        return res.render('error', { errorMessage: 'An error occurred while fetching like count.', sessionUser: req.session.user });
                     }
 
                     db.all('SELECT * FROM likes', (err, likes) => {
                         if (err) {
                             console.error('Error fetching likes:', err);
-                            return res.render('error', { errorMessage: 'An error occurred while fetching likes.' });
+                            return res.render('error', { errorMessage: 'An error occurred while fetching likes.', sessionUser: req.session.user });
                         }
 
                         const userLikes = {};
@@ -53,7 +53,7 @@ exports.getProfile = (req, res) => {
                             postCount: postCount.postCount,
                             likeCount: likeCount.likeCount,
                             isOwner,
-                            sessionUser: req.session.user, // Pass session user explicitly
+                            sessionUser: req.session.user,
                             userLikes,
                             likes: userLikes
                         });
@@ -70,35 +70,35 @@ exports.getProfileByUsername = (req, res) => {
     db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
         if (err) {
             console.error('Error fetching user:', err);
-            return res.render('error', { errorMessage: 'An error occurred while fetching user data.' });
+            return res.render('error', { errorMessage: 'An error occurred while fetching user data.', sessionUser: req.session.user });
         }
 
         if (!user) {
-            return res.render('error', { errorMessage: 'User not found.' });
+            return res.render('error', { errorMessage: 'User not found.', sessionUser: req.session.user });
         }
 
         db.all('SELECT * FROM items WHERE creator = ?', [username], (err, posts) => {
             if (err) {
                 console.error('Error fetching posts:', err);
-                return res.render('error', { errorMessage: 'An error occurred while fetching posts.' });
+                return res.render('error', { errorMessage: 'An error occurred while fetching posts.', sessionUser: req.session.user });
             }
 
             db.get('SELECT COUNT(*) as postCount FROM items WHERE creator = ?', [username], (err, postCount) => {
                 if (err) {
                     console.error('Error fetching post count:', err);
-                    return res.render('error', { errorMessage: 'An error occurred while fetching post count.' });
+                    return res.render('error', { errorMessage: 'An error occurred while fetching post count.', sessionUser: req.session.user });
                 }
 
                 db.get('SELECT COUNT(*) as likeCount FROM likes WHERE username = ?', [username], (err, likeCount) => {
                     if (err) {
                         console.error('Error fetching like count:', err);
-                        return res.render('error', { errorMessage: 'An error occurred while fetching like count.' });
+                        return res.render('error', { errorMessage: 'An error occurred while fetching like count.', sessionUser: req.session.user });
                     }
 
                     db.all('SELECT * FROM likes', (err, likes) => {
                         if (err) {
                             console.error('Error fetching likes:', err);
-                            return res.render('error', { errorMessage: 'An error occurred while fetching likes.' });
+                            return res.render('error', { errorMessage: 'An error occurred while fetching likes.', sessionUser: req.session.user });
                         }
 
                         const userLikes = {};
@@ -115,7 +115,7 @@ exports.getProfileByUsername = (req, res) => {
                             postCount: postCount.postCount,
                             likeCount: likeCount.likeCount,
                             isOwner: false,
-                            sessionUser: req.session.user, // Pass session user explicitly
+                            sessionUser: req.session.user,
                             userLikes,
                             likes: userLikes
                         });
@@ -123,6 +123,38 @@ exports.getProfileByUsername = (req, res) => {
                 });
             });
         });
+    });
+};
+
+exports.editUsername = (req, res) => {
+    const { userId, newName } = req.body;
+
+    db.run("UPDATE users SET username = ? WHERE id = ?", [newName, userId], (err) => {
+        if (err) {
+            console.error('Error updating username:', err);
+            req.session.errorMessage = 'An error occurred while updating the username.';
+        }
+
+        db.run('UPDATE items SET creator = ? WHERE creatorId = ?', [newName, userId], function (err) {
+            if (err) {
+                console.error('Error updating items:', err);
+            }
+        });
+
+        db.run('UPDATE likes SET username = ? WHERE userId = ?', [newName, userId], function (err) {
+            if (err) {
+                console.error('Error updating likes:', err);
+            }
+        });
+
+        db.run('UPDATE logs SET user = ? WHERE userId = ?', [newName, userId], function (err) {
+            if (err) {
+                console.error('Error updating logs:', err);
+            }
+        });
+
+        req.session.user.username = newName;
+        res.redirect('/profile');
     });
 };
 

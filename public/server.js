@@ -50,6 +50,7 @@ app.post('/unlike/:id', authController.ensureLoggedIn, itemController.unlikeItem
 app.get('/profile', authController.ensureLoggedIn, profileController.getProfile);
 app.get('/profile/:username', authController.ensureLoggedIn, profileController.getProfileByUsername);
 app.post('/profile/editPost', authController.ensureLoggedIn, profileController.editPost);
+app.post('/profile/editUsername', authController.ensureLoggedIn, profileController.editUsername);
 
 app.get('/admin', authController.ensureAdmin, adminController.getAdminPage);
 app.post('/admin/update-username', authController.ensureAdmin, adminController.updateUsername);
